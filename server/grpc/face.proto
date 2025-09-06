@@ -1,0 +1,12 @@
+syntax = "proto3";
+package face;
+
+service FaceService {
+  rpc StreamRecognitions (Empty) returns (stream RecognitionResponse);
+}
+
+message Empty {}
+
+message RecognitionResponse {
+  string student_id = 1;
+}
