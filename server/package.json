@@ -10,7 +10,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "description": "",
   "dependencies": {
     "@grpc/grpc-js": "^1.13.4",

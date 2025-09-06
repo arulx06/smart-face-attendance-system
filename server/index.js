@@ -1,18 +1,20 @@
-require('dotenv').config();
-const http = require('http');
-const socketIo = require('socket.io');
-const app = require('./app');
-const connectDB = require('./config/db');
-const attendanceService = require('./services/attendanceService');
-const { startGrpcClient } = require('./grpc/grpcClient');
+import dotenv from "dotenv"
+import http from "http"
+import {Server} from "socket.io"
+import app from "./app.js"
+import {connectDB} from "./config/db.js"
+import attendanceService from "./services/attendanceService.js"
+import startGrpcClient from "./grpc/grpcClient.js"
 
+
+dotenv.config();
 const PORT = process.env.PORT || 5000;
 
 async function start() {
-  await connectDB(process.env.MONGO_URI);
+  await connectDB();
 
   const server = http.createServer(app);
-  const io = socketIo(server, { cors: { origin: '*' } });
+  const io = new Server(server, { cors: { origin: '*' } });
 
   io.on('connection', (socket) => {
     console.log('Frontend connected:', socket.id);

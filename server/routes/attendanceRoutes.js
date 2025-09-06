@@ -1,7 +1,7 @@
-const express = require('express');
+import express from "express";
+import { getLogs } from "../controllers/attendanceController.js"; 
 const router = express.Router();
-const ctrl = require('../controllers/attendanceController');
 
-router.get('/', ctrl.getLogs);
+router.get("/", getLogs);
 
-module.exports = router;
+export default router;

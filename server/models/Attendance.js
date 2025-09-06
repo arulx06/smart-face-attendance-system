@@ -1,9 +1,24 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
-const AttendanceSchema = new mongoose.Schema({
-  studentId: { type: String, required: true, index: true },
-  timestamp: { type: Date, default: Date.now, index: true },
-  source: { type: String, default: 'camera' }, // optional
-}, { versionKey: false });
+const AttendanceSchema = new mongoose.Schema(
+    {
+    studentId: {
+      type: String,
+      required: true, 
+      index: true 
+    },
+    timestamp: {
+      type: Date, 
+      default: Date.now, 
+      index: true 
+    },
+    source: { 
+      type: String, 
+      default: 'camera' 
+    }, 
+    },
+    { versionKey: false }
+);
 
-module.exports = mongoose.model('Attendance', AttendanceSchema);
+const Attendance = mongoose.model("Attendance",AttendanceSchema);
+export default Attendance;

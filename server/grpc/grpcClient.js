@@ -1,8 +1,12 @@
-const path = require('path');
-const grpc = require('@grpc/grpc-js');
-const protoLoader = require('@grpc/proto-loader');
+import path from 'path';
+import grpc from "@grpc/grpc-js"
+import protoLoader from "@grpc/proto-loader"
+import { fileURLToPath } from "url";
 
-const attendanceService = require('../services/attendanceService');
+import attendanceService from '../services/attendanceService.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PROTO_PATH = path.join(__dirname, 'face.proto'); // ensure face.proto copied here
 const packageDef = protoLoader.loadSync(PROTO_PATH, {
@@ -33,4 +37,4 @@ function startGrpcClient(addr = process.env.GRPC_ADDR || 'localhost:50051') {
   console.log('Connected to gRPC server at', addr);
 }
 
-module.exports = { startGrpcClient };
+export default startGrpcClient;

@@ -1,4 +1,4 @@
-const Attendance = require('../models/Attendance');
+import Attendance from '../models/Attendance.js';
 
 let io = null;
 const DEDUP_WINDOW_MS = process.env.DEDUP_WINDOW_MS ? Number(process.env.DEDUP_WINDOW_MS) : 60_000;
@@ -32,4 +32,4 @@ async function handleRecognition(studentId) {
   }
 }
 
-module.exports = { init, handleRecognition };
+export default {init, handleRecognition};
