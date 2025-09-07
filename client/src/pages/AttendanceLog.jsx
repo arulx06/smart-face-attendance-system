@@ -65,8 +65,9 @@ export default function AttendanceLog() {
   // Fetch attendance + socket (attendance view)
   useEffect(() => {
     if (view !== "attendance") return;
-
-    fetch("http://localhost:5000/api/attendance?limit=100")
+    const token = localStorage.getItem("token");
+    fetch("http://localhost:5000/api/attendance?limit=100", {
+  headers: { Authorization: `Bearer ${token}` },})
       .then((r) => r.json())
       .then((data) => { if (data.success) setLogs(data.data); })
       .catch(console.error);
@@ -81,7 +82,9 @@ export default function AttendanceLog() {
   useEffect(() => {
     if (view !== "students") return;
 
-    fetch("http://localhost:5000/api/students")
+    fetch("http://localhost:5000/api/students", {
+  headers: { Authorization: `Bearer ${token}` },
+})
       .then((r) => r.json())
       .then((data) => { if (data.success) setStudents(data.data); })
       .catch(console.error);

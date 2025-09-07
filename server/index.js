@@ -1,4 +1,5 @@
 import dotenv from "dotenv"
+import path from "path"
 import http from "http"
 import {Server} from "socket.io"
 import app from "./app.js"
@@ -26,7 +27,6 @@ async function start() {
 
   // start gRPC client that listens to Python stream
   startGrpcClient(process.env.GRPC_ADDR);
-
   server.listen(PORT, () => console.log(`Backend listening http://localhost:${PORT}`));
 }
 
