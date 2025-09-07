@@ -81,7 +81,7 @@ export default function AttendanceLog() {
   // Fetch students list
   useEffect(() => {
     if (view !== "students") return;
-
+    const token = localStorage.getItem("token");
     fetch("http://localhost:5000/api/students", {
   headers: { Authorization: `Bearer ${token}` },
 })
@@ -91,14 +91,23 @@ export default function AttendanceLog() {
   }, [view]);
 
   const handleStudentClick = async (id) => {
-    try {
-      const res = await fetch(`http://localhost:5000/api/students/${id}`);
-      const data = await res.json();
-      if (data.success) setSelectedStudent(data.data);
-    } catch (err) {
-      console.error(err);
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`http://localhost:5000/api/students/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      setSelectedStudent(data.data);
+    } else {
+      // fallback if backend just returns student object
+      setSelectedStudent(data);
     }
-  };
+  } catch (err) {
+    console.error("Error fetching student:", err);
+  }
+};
 
   const closeModal = () => setSelectedStudent(null);
 
