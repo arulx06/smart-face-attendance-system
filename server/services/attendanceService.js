@@ -1,30 +1,41 @@
 import Attendance from '../models/Attendance.js';
+import { Redis } from '@upstash/redis';
 
 let io = null;
-const DEDUP_WINDOW_MS = process.env.DEDUP_WINDOW_MS ? Number(process.env.DEDUP_WINDOW_MS) : 60_000;
+
+// initialize Redis client
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
 
 function init(_io) {
   io = _io;
 }
 
-// Save to DB but avoid duplicate logs for same student within DEDUP_WINDOW_MS
 async function handleRecognition(studentId) {
   try {
-    if (!studentId || ['No Face','Unknown','Error'].includes(studentId)) return;
+    if (!studentId || ['No Face', 'Unknown', 'Error'].includes(studentId)) return;
 
-    const cutoff = new Date(Date.now() - DEDUP_WINDOW_MS);
+    // Use a key like `attendance:2025-09-07:student123`
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const key = `attendance:${today}:${studentId}`;
 
-    // find recent record for same student
-    const recent = await Attendance.findOne({ studentId, timestamp: { $gte: cutoff } }).sort({ timestamp: -1 });
+    // Try to set the key only if it does not exist, expire in 24h
+    const wasSet = await redis.set(key, "1", { nx: true, ex: 60 * 60 * 24 });
 
-    if (recent) {
-      // duplicate (recent) - skip saving
+    if (!wasSet) {
+      // Key already exists → student already logged today
       return;
     }
 
+    // Save to MongoDB
     const doc = await Attendance.create({ studentId });
-    // emit to connected clients
-    if (io) io.emit('new_attendance', { studentId: doc.studentId, timestamp: doc.timestamp });
+
+    // Notify clients
+    if (io) {
+      io.emit('new_attendance', { studentId: doc.studentId, timestamp: doc.timestamp });
+    }
 
     console.log('Logged attendance:', doc.studentId, doc.timestamp.toISOString());
   } catch (err) {
@@ -32,4 +43,4 @@ async function handleRecognition(studentId) {
   }
 }
 
-export default {init, handleRecognition};
+export default { init, handleRecognition };
