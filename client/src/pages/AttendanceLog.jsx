@@ -62,11 +62,17 @@ export default function AttendanceLog() {
   const [view, setView] = useState("attendance"); // 'attendance' | 'students'
   const [selectedStudent, setSelectedStudent] = useState(null);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/login"; // or your login route
+  };
+
   // Fetch attendance + socket (attendance view)
   useEffect(() => {
     if (view !== "attendance") return;
-
-    fetch("http://localhost:5000/api/attendance?limit=100")
+    const token = localStorage.getItem("token");
+    fetch("http://localhost:5000/api/attendance?limit=100", {
+  headers: { Authorization: `Bearer ${token}` },})
       .then((r) => r.json())
       .then((data) => { if (data.success) setLogs(data.data); })
       .catch(console.error);
@@ -80,27 +86,55 @@ export default function AttendanceLog() {
   // Fetch students list
   useEffect(() => {
     if (view !== "students") return;
-
-    fetch("http://localhost:5000/api/students")
+    const token = localStorage.getItem("token");
+    fetch("http://localhost:5000/api/students", {
+  headers: { Authorization: `Bearer ${token}` },
+})
       .then((r) => r.json())
       .then((data) => { if (data.success) setStudents(data.data); })
       .catch(console.error);
   }, [view]);
 
   const handleStudentClick = async (id) => {
-    try {
-      const res = await fetch(`http://localhost:5000/api/students/${id}`);
-      const data = await res.json();
-      if (data.success) setSelectedStudent(data.data);
-    } catch (err) {
-      console.error(err);
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`http://localhost:5000/api/students/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      setSelectedStudent(data.data);
+    } else {
+      // fallback if backend just returns student object
+      setSelectedStudent(data);
     }
-  };
+  } catch (err) {
+    console.error("Error fetching student:", err);
+  }
+};
 
   const closeModal = () => setSelectedStudent(null);
 
   return (
     <div style={{ padding: 20 }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+        <button
+          onClick={handleLogout}
+          style={{
+            padding: "8px 16px",
+            borderRadius: 8,
+            border: "none",
+            background: "#ef4444",
+            color: "#fff",
+            fontWeight: 600,
+            cursor: "pointer",
+            boxShadow: "0 2px 8px rgba(239,68,68,0.08)"
+          }}
+        >
+          Logout
+        </button>
+      </div>
       <div style={{ textAlign: "center", marginBottom: 18 }}>
         <h1 style={{ fontSize: 28, margin: 0, color: "#0f172a" }}>{view === "attendance" ? "Attendance Log" : "Student List"}</h1>
 
