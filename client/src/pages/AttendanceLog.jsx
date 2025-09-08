@@ -62,6 +62,11 @@ export default function AttendanceLog() {
   const [view, setView] = useState("attendance"); // 'attendance' | 'students'
   const [selectedStudent, setSelectedStudent] = useState(null);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/login"; // or your login route
+  };
+
   // Fetch attendance + socket (attendance view)
   useEffect(() => {
     if (view !== "attendance") return;
@@ -113,6 +118,23 @@ export default function AttendanceLog() {
 
   return (
     <div style={{ padding: 20 }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+        <button
+          onClick={handleLogout}
+          style={{
+            padding: "8px 16px",
+            borderRadius: 8,
+            border: "none",
+            background: "#ef4444",
+            color: "#fff",
+            fontWeight: 600,
+            cursor: "pointer",
+            boxShadow: "0 2px 8px rgba(239,68,68,0.08)"
+          }}
+        >
+          Logout
+        </button>
+      </div>
       <div style={{ textAlign: "center", marginBottom: 18 }}>
         <h1 style={{ fontSize: 28, margin: 0, color: "#0f172a" }}>{view === "attendance" ? "Attendance Log" : "Student List"}</h1>
 
