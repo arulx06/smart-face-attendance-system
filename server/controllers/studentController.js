@@ -5,6 +5,11 @@ export const registerStudent = async (req, res) => {
   try {
     const { studentId, name, email, department, year } = req.body;
 
+    const existing = await Student.findOne({ studentId });
+    if (existing) {
+    return res.status(400).json({ success: false, message: "Student ID already exists" });
+    }
+
     if (!studentId || !name) {
       return res.status(400).json({ success: false, message: "studentId and name are required" });
     }
@@ -15,7 +20,8 @@ export const registerStudent = async (req, res) => {
 
     // only first image path is stored in DB
     const firstImage = req.files[0];
-    const imageUrl = `/Images/${studentId}_${name.trim().split(" ")[0].toLowerCase()}/${firstImage.filename}`;
+    const cleanName = name.trim().split(" ")[0].toLowerCase().replace(/[^a-z0-9]/gi, "");
+    const imageUrl = `/Images/${studentId}_${cleanName}/${firstImage.filename}`;
 
     // create student in DB
     const student = new Student({

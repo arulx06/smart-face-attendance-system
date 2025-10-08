@@ -4,6 +4,7 @@ import pickle
 import torch
 import numpy as np
 import grpc
+import os
 from concurrent import futures
 from facenet_pytorch import InceptionResnetV1, MTCNN
 
@@ -24,6 +25,12 @@ cap = cv2.VideoCapture(0)
 cap.set(3, 1280)
 cap.set(4, 720)
 
+CAMERA_STATUS_FILE = "camera_status.txt"
+if not os.path.exists(CAMERA_STATUS_FILE):
+    with open(CAMERA_STATUS_FILE, "w") as f:
+        f.write("RUNNING")
+
+
 # ========== Face Recognition ==========
 def recognize_face(face_img):
     face_tensor = mtcnn(face_img)
@@ -41,10 +48,22 @@ def recognize_face(face_img):
     else:
         return "Unknown"
 
+
 # ========== gRPC Service ==========
 class FaceService(face_pb2_grpc.FaceServiceServicer):
     def StreamRecognitions(self, request, context):
         while True:
+            # Check if camera is stopped externally
+            try:
+                with open(CAMERA_STATUS_FILE, "r") as f:
+                    status = f.read().strip()
+            except FileNotFoundError:
+                status = "RUNNING"
+
+            if status == "STOPPED":
+                time.sleep(0.5)
+                continue  # Skip frame reading
+
             success, frame = cap.read()
             if not success:
                 time.sleep(0.1)
@@ -73,19 +92,16 @@ class FaceService(face_pb2_grpc.FaceServiceServicer):
                         print("Recognition error:", e)
                         detected_id = "Error"
 
-                    # Draw bounding box + label on the frame
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                     cv2.putText(frame, detected_id, (x1, y1 - 10),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
-            # ✅ Show webcam with annotations
             cv2.imshow("Face Recognition Server", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-            # Send recognition result to gRPC client
             yield face_pb2.RecognitionResponse(student_id=str(detected_id))
-            time.sleep(0.2)  # small delay to reduce CPU usage
+            time.sleep(0.2)
 
 # ========== Server Runner ==========
 def serve():
