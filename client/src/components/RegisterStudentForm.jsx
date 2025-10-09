@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import React, { useState, useRef } from "react";
 
 export default function RegisterStudentForm() {
@@ -8,12 +9,23 @@ export default function RegisterStudentForm() {
     department: "",
     year: "",
   });
+=======
+import React, { useRef, useState } from "react";
+import { stopRecognitionCamera, startRecognitionCamera } from "../api/cameraApi";
+
+const RegisterStudentForm = () => {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+
+  const [cameraOpen, setCameraOpen] = useState(false);
+>>>>>>> Stashed changes
   const [images, setImages] = useState([]);
   const [preview, setPreview] = useState([]);
   const [cameraOpen, setCameraOpen] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
+<<<<<<< Updated upstream
   // =================== Form Handlers ===================
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -124,9 +136,29 @@ export default function RegisterStudentForm() {
         await startRecognitionCamera(); // Restart recognition camera after successful registration
       } else {
         alert("❌ Error: " + result.message);
+=======
+  // Open registration camera
+  const openCamera = async () => {
+    try {
+      await stopRecognitionCamera();
+      await new Promise((r) => setTimeout(r, 500)); // give Python time to release camera
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 1280, height: 720 },
+      });
+
+      setCameraOpen(true); // render video first
+      await new Promise((r) => setTimeout(r, 50));
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+>>>>>>> Stashed changes
       }
     } catch (err) {
+      alert("Camera access denied or unavailable.");
       console.error(err);
+<<<<<<< Updated upstream
       alert("Failed to register student.");
       await startRecognitionCamera();
     }
@@ -213,20 +245,68 @@ export default function RegisterStudentForm() {
           </div>
         </div>
       </div>
+=======
+      await startRecognitionCamera(); // restart model if failed
+    }
+  };
+
+  // Close registration camera and resume recognition
+  const closeCamera = async () => {
+    const stream = videoRef.current?.srcObject;
+    if (stream) stream.getTracks().forEach((track) => track.stop());
+    setCameraOpen(false);
+    await startRecognitionCamera(); // restart model camera
+  };
+
+  // Capture photo
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const file = new File([blob], `capture_${Date.now()}.jpg`, { type: "image/jpeg" });
+      setImages((prev) => [...prev, file]);
+      setPreview((prev) => [...prev, URL.createObjectURL(file)]);
+    }, "image/jpeg");
+  };
+
+  return (
+    <div>
+      <button type="button" onClick={openCamera}>
+        Open Camera
+      </button>
+>>>>>>> Stashed changes
 
       {cameraOpen && (
         <div style={{ marginTop: 20, textAlign: "center" }}>
           <video
             ref={videoRef}
             autoPlay
+<<<<<<< Updated upstream
             style={{
               width: "100%",
+=======
+            playsInline
+            muted
+            style={{
+              width: "100%",
+              maxWidth: 480,
+              height: "auto",
+>>>>>>> Stashed changes
               borderRadius: 8,
               border: "1px solid #ccc",
               marginBottom: 10,
             }}
           />
           <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
+<<<<<<< Updated upstream
           <div
             style={{ display: "flex", justifyContent: "center", gap: 12 }}
           >
@@ -234,17 +314,29 @@ export default function RegisterStudentForm() {
               type="button"
               onClick={capturePhoto}
               style={{ ...submitStyle, background: "#2563eb" }}
+=======
+          <div style={{ display: "flex", justifyContent: "center", gap: 12 }}>
+            <button
+              type="button"
+              onClick={capturePhoto}
+              style={{ padding: "8px 16px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 4 }}
+>>>>>>> Stashed changes
             >
               Capture Photo
             </button>
             <button
               type="button"
               onClick={closeCamera}
+<<<<<<< Updated upstream
               style={{ ...submitStyle, background: "#ef4444" }}
+=======
+              style={{ padding: "8px 16px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 4 }}
+>>>>>>> Stashed changes
             >
               Close
             </button>
           </div>
+<<<<<<< Updated upstream
         </div>
       )}
 
@@ -279,9 +371,24 @@ export default function RegisterStudentForm() {
         <button type="submit" style={submitStyle}>
           Register
         </button>
+=======
+        </div>
+      )}
+
+      <div style={{ marginTop: 20 }}>
+        {preview.map((src, idx) => (
+          <img
+            key={idx}
+            src={src}
+            alt={`capture-${idx}`}
+            style={{ width: 120, height: 90, marginRight: 8, borderRadius: 4 }}
+          />
+        ))}
+>>>>>>> Stashed changes
       </div>
-    </form>
+    </div>
   );
+<<<<<<< Updated upstream
 }
 
 // =================== Styles ===================
@@ -293,16 +400,8 @@ const inputStyle = {
   outline: "none",
   fontSize: "15px",
   boxSizing: "border-box",
+=======
+>>>>>>> Stashed changes
 };
 
-const submitStyle = {
-  padding: "12px 28px",
-  borderRadius: 8,
-  border: "none",
-  cursor: "pointer",
-  background: "#0ea5e9",
-  color: "#fff",
-  fontWeight: 600,
-  fontSize: "16px",
-  transition: "background 0.2s",
-};
+export default RegisterStudentForm;

@@ -1,3 +1,4 @@
+# main.py
 import time
 import cv2
 import pickle
@@ -21,9 +22,8 @@ with open("EncodeFile.p", "rb") as file:
     encodeListKnown, studentIds = pickle.load(file)
 print("Encodings loaded:", len(studentIds))
 
-cap = cv2.VideoCapture(0)
-cap.set(3, 1280)
-cap.set(4, 720)
+# Do NOT open the camera at module import time; open it when a client starts streaming
+cap = None
 
 CAMERA_STATUS_FILE = "camera_status.txt"
 if not os.path.exists(CAMERA_STATUS_FILE):
@@ -52,6 +52,7 @@ def recognize_face(face_img):
 # ========== gRPC Service ==========
 class FaceService(face_pb2_grpc.FaceServiceServicer):
     def StreamRecognitions(self, request, context):
+<<<<<<< Updated upstream
         while True:
             # Check if camera is stopped externally
             try:
@@ -68,30 +69,39 @@ class FaceService(face_pb2_grpc.FaceServiceServicer):
             if not success:
                 time.sleep(0.1)
                 continue
+=======
+        global cap
+        print("gRPC client connected to StreamRecognitions. Opening camera...")
+>>>>>>> Stashed changes
 
-            img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            boxes, _ = mtcnn.detect(img_rgb)
-            detected_id = "No Face"
+        try:
+            # Open camera when a client connects (if not already open)
+            if cap is None or not getattr(cap, "isOpened", lambda: False)():
+                cap = cv2.VideoCapture(0)
+                cap.set(3, 1280)
+                cap.set(4, 720)
+                print("Camera opened for streaming.")
 
-            if boxes is not None:
-                for box in boxes:
-                    x1, y1, x2, y2 = [int(b) for b in box]
-                    h, w, _ = img_rgb.shape
-                    x1, y1 = max(0, x1), max(0, y1)
-                    x2, y2 = min(w, x2), min(h, y2)
-                    if x2 <= x1 or y2 <= y1:
-                        continue
+            while context.is_active():
+                success, frame = cap.read()
+                if not success:
+                    time.sleep(0.1)
+                    continue
 
-                    face_img = img_rgb[y1:y2, x1:x2]
-                    if face_img.size == 0:
-                        continue
+                img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                boxes, _ = mtcnn.detect(img_rgb)
+                detected_id = "No Face"
 
-                    try:
-                        detected_id = recognize_face(face_img)
-                    except Exception as e:
-                        print("Recognition error:", e)
-                        detected_id = "Error"
+                if boxes is not None:
+                    for box in boxes:
+                        x1, y1, x2, y2 = [int(b) for b in box]
+                        h, w, _ = img_rgb.shape
+                        x1, y1 = max(0, x1), max(0, y1)
+                        x2, y2 = min(w, x2), min(h, y2)
+                        if x2 <= x1 or y2 <= y1:
+                            continue
 
+<<<<<<< Updated upstream
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                     cv2.putText(frame, detected_id, (x1, y1 - 10),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
@@ -102,6 +112,45 @@ class FaceService(face_pb2_grpc.FaceServiceServicer):
 
             yield face_pb2.RecognitionResponse(student_id=str(detected_id))
             time.sleep(0.2)
+=======
+                        face_img = img_rgb[y1:y2, x1:x2]
+                        if face_img.size == 0:
+                            continue
+
+                        try:
+                            detected_id = recognize_face(face_img)
+                        except Exception as e:
+                            print("Recognition error:", e)
+                            detected_id = "Error"
+
+                        # Draw bounding box + label on the frame
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                        cv2.putText(frame, detected_id, (x1, y1 - 10),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+
+                # Show webcam with annotations locally (optional)
+                cv2.imshow("Face Recognition Server", frame)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+
+                # Send recognition result to gRPC client
+                yield face_pb2.RecognitionResponse(student_id=str(detected_id))
+                time.sleep(0.2)  # small delay to reduce CPU usage
+
+            print("gRPC client disconnected or context inactive, closing stream.")
+        except Exception as ex:
+            print("StreamRecognitions exception:", ex)
+        finally:
+            # release camera on client disconnect or error
+            try:
+                if cap is not None and getattr(cap, "isOpened", lambda: False)():
+                    cap.release()
+                    cv2.destroyAllWindows()
+                    print("Camera released.")
+            except Exception as e:
+                print("Error releasing camera:", e)
+            cap = None
+>>>>>>> Stashed changes
 
 # ========== Server Runner ==========
 def serve():
@@ -114,7 +163,8 @@ def serve():
         server.wait_for_termination()
     except KeyboardInterrupt:
         print("Stopping server...")
-        cap.release()
+        if cap is not None and getattr(cap, "isOpened", lambda: False)():
+            cap.release()
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":

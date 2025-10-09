@@ -26,5 +26,9 @@ app.use('/api/students',authMiddleware,studentRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/register", registerRoutes);
 app.use("/api", cameraRoutes);
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 
 export default app
