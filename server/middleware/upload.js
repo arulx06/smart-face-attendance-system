@@ -10,7 +10,7 @@ const storage = multer.diskStorage({
       cleanName = name.trim().split(" ")[0].toLowerCase();
     }
     const folderName = `${studentId}_${cleanName}`;
-    const dir = path.join(process.cwd(), "Images", folderName);
+    const dir = path.join(path.resolve(".."), "Images", folderName);
     fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
