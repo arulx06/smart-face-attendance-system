@@ -26,12 +26,25 @@ export default function RegisterStudentForm() {
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files).filter((file) =>
-      file.type === "image/jpeg" || file.type === "image/jpg"
+    const files = Array.from(e.dataTransfer.files).filter(
+      (file) => file.type === "image/jpeg" || file.type === "image/jpg"
     );
     if (files.length === 0) return;
     setImages(files);
     setPreview(files.map((f) => URL.createObjectURL(f)));
+  };
+
+  // 🧹 Remove a selected image
+  const handleRemoveImage = (index) => {
+    const updatedImages = images.filter((_, i) => i !== index);
+    const updatedPreview = preview.filter((_, i) => i !== index);
+    setImages(updatedImages);
+    setPreview(updatedPreview);
+
+    // Also clear file input if all images are removed
+    if (updatedImages.length === 0 && fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -44,17 +57,14 @@ export default function RegisterStudentForm() {
     const token = localStorage.getItem("token");
     const data = new FormData();
 
-    // Append form fields
     Object.entries(form).forEach(([key, val]) => data.append(key, val));
-
-    // Append images
     images.forEach((img) => data.append("images", img));
 
     try {
       const res = await fetch("http://localhost:5000/api/register/register", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
-        body: data
+        body: data,
       });
 
       const result = await res.json();
@@ -65,7 +75,6 @@ export default function RegisterStudentForm() {
         setImages([]);
         setPreview([]);
 
-        // Clear file input manually
         if (fileInputRef.current) fileInputRef.current.value = "";
       } else {
         alert("Error: " + result.message);
@@ -166,7 +175,7 @@ export default function RegisterStudentForm() {
         </div>
       </div>
 
-      {/* Preview images */}
+      {/* 🖼️ Preview images with delete button */}
       {preview.length > 0 && (
         <div
           style={{
@@ -178,18 +187,42 @@ export default function RegisterStudentForm() {
           }}
         >
           {preview.map((src, i) => (
-            <img
-              key={i}
-              src={src}
-              alt="preview"
-              style={{
-                width: 110,
-                height: 110,
-                objectFit: "cover",
-                borderRadius: 8,
-                border: "1px solid #ccc",
-              }}
-            />
+            <div key={i} style={{ position: "relative" }}>
+              <img
+                src={src}
+                alt="preview"
+                style={{
+                  width: 110,
+                  height: 110,
+                  objectFit: "cover",
+                  borderRadius: 8,
+                  border: "1px solid #ccc",
+                }}
+              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveImage(i);
+                }}
+                style={{
+                  position: "absolute",
+                  top: -6,
+                  right: -6,
+                  background: "#ef4444",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: 22,
+                  height: 22,
+                  cursor: "pointer",
+                  fontSize: 14,
+                  lineHeight: "22px",
+                }}
+              >
+                ×
+              </button>
+            </div>
           ))}
         </div>
       )}
