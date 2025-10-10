@@ -60,7 +60,7 @@ export default function Login() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             style={{
-              width: "100%",
+              width: "80%",
               padding: "12px",
               marginBottom: "14px",
               border: "1px solid #d1d5db",
@@ -74,7 +74,7 @@ export default function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={{
-              width: "100%",
+              width: "80%",
               padding: "12px",
               marginBottom: "18px",
               border: "1px solid #d1d5db",
@@ -85,7 +85,7 @@ export default function Login() {
           <button
             type="submit"
             style={{
-              width: "100%",
+              width: "80%",
               padding: "12px",
               backgroundColor: "#0ea5e9",
               color: "#fff",
