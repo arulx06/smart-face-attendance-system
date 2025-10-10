@@ -3,6 +3,7 @@ import { exec } from "child_process";
 import path from "path";
 // server/controllers/studentController.js
 import Student from "../models/Student.js";
+import Attendance from "../models/Attendance.js";
 import fs from "fs";
 
 
@@ -76,3 +77,46 @@ export const registerStudent = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+// Delete student and their attendance
+// Delete student and their attendance logs + image folder
+export const deleteStudent = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    // Find student
+    const student = await Student.findOne({ studentId });
+    if (!student) {
+      return res.status(404).json({ success: false, message: "Student not found" });
+    }
+
+    // Delete student folder in Images
+    if (student.imageUrl) {
+      const folderPath = path.join(process.cwd(), "Images", `${studentId}_${student.name.trim().split(" ")[0].toLowerCase()}`);
+
+      console.log("Trying to delete folder:", folderPath);
+      if (fs.existsSync(folderPath)) {
+  fs.rmSync(folderPath, { recursive: true, force: true });
+  console.log("Folder deleted successfully");
+} else {
+  console.log("Folder does not exist");
+}
+
+    }
+    
+
+    // Delete student from DB
+    await Student.deleteOne({ studentId });
+
+    // Delete attendance logs from DB
+    const Attendance = await import("../models/Attendance.js");
+    await Attendance.default.deleteMany({ studentId });
+
+    return res.status(200).json({ success: true, message: "Student and attendance deleted successfully" });
+  } catch (err) {
+    console.error("Error in deleteStudent:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+

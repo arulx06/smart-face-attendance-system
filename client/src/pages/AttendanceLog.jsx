@@ -69,6 +69,32 @@ export default function AttendanceLog() {
     }
   };
 
+  const handleDeleteStudent = async (studentId) => {
+  if (!window.confirm("Are you sure you want to delete this student and all their attendance logs?")) return;
+
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`http://localhost:5000/api/students/${studentId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      // Update frontend immediately
+      setStudents((prev) => prev.filter((s) => s.studentId !== studentId));
+      setLogs((prev) => prev.filter((log) => log.studentId !== studentId));
+      alert("Student and attendance deleted successfully.");
+    } else {
+      alert("Error: " + data.message);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Failed to delete student.");
+  }
+};
+
+
   const closeModal = () => setSelectedStudent(null);
 
   return (
@@ -200,37 +226,52 @@ export default function AttendanceLog() {
                 </tr>
               </thead>
               <tbody>
-                {students.length === 0 ? (
-                  <tr>
-                    <td colSpan="3" style={{ padding: "18px", textAlign: "center", color: "#6b7280" }}>
-                      No students found. Check API or DB.
+              {students.length === 0 ? (
+                <tr>
+                  <td colSpan="4" style={{ padding: "18px", textAlign: "center", color: "#6b7280" }}>
+                    No students found. Check API or DB.
+                  </td>
+                </tr>
+              ) : (
+                students.map((s, i) => (
+                  <tr key={s.studentId} style={{ background: i % 2 === 0 ? "#fff" : "#f8feff" }}>
+                    <td style={{ padding: "12px", borderBottom: "1px solid rgba(0,0,0,0.04)", fontWeight: 600 }}>{s.studentId}</td>
+                    <td style={{ padding: "12px", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>{s.name}</td>
+                    <td style={{ padding: "12px", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+                      <button
+                        onClick={() => handleStudentClick(s.studentId)}
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: 6,
+                          background: "#0ea5e9",
+                          color: "#fff",
+                          border: "none",
+                          cursor: "pointer",
+                          fontWeight: 600,
+                          marginRight: 6
+                        }}
+                      >
+                        Info
+                      </button>
+                      <button
+                        onClick={() => handleDeleteStudent(s.studentId)}
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: 6,
+                          background: "#ef4444",
+                          color: "#fff",
+                          border: "none",
+                          cursor: "pointer",
+                          fontWeight: 600
+                        }}
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
-                ) : (
-                  students.map((s, i) => (
-                    <tr key={s.studentId} style={{ background: i % 2 === 0 ? "#fff" : "#f8feff" }}>
-                      <td style={{ padding: "12px", borderBottom: "1px solid rgba(0,0,0,0.04)", fontWeight: 600 }}>{s.studentId}</td>
-                      <td style={{ padding: "12px", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>{s.name}</td>
-                      <td style={{ padding: "12px", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
-                        <button
-                          onClick={() => handleStudentClick(s.studentId)}
-                          style={{
-                            padding: "6px 12px",
-                            borderRadius: 6,
-                            background: "#0ea5e9",
-                            color: "#fff",
-                            border: "none",
-                            cursor: "pointer",
-                            fontWeight: 600,
-                          }}
-                        >
-                          Info
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
+                ))
+              )}
+            </tbody>
             </table>
           </div>
         </div>

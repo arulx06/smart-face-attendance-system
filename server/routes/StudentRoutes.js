@@ -1,12 +1,12 @@
 import express from "express"
 import Student from "../models/Student.js";
-
+import {deleteStudent } from "../controllers/studentController.js";
 const router = express.Router();
 
 // GET /api/students  -> return minimal info (studentId + name)
 router.get('/', async (req, res) => {
   try {
-    const students = await Student.find({}, 'studentId name imageUrl').lean();
+    const students = await Student.find({}, 'studentId name imageUrl').sort({ studentId: 1 }).lean();
     res.json({ success: true, data: students });
   } catch (err) {
     console.error('GET /api/students error', err);
@@ -25,5 +25,8 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// Delete student
+router.delete("/:studentId", deleteStudent);
 
 export default router;
