@@ -6,6 +6,7 @@ import numpy as np
 import grpc
 from concurrent import futures
 from facenet_pytorch import InceptionResnetV1, MTCNN
+import os
 
 import face_pb2
 import face_pb2_grpc
@@ -16,10 +17,22 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 mtcnn = MTCNN(image_size=160, margin=10, min_face_size=40, device=device)
 model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
 
-print("Loading encodings...")
-with open("EncodeFile.p", "rb") as file:
-    encodeListKnown, studentIds = pickle.load(file)
-print("Encodings loaded:", len(studentIds))
+ENCODE_FILE = "EncodeFile.p"
+encodeListKnown, studentIds = [], []
+last_modified = None
+
+def load_encodings():
+    global encodeListKnown, studentIds
+    with open(ENCODE_FILE, "rb") as file:
+        encodeListKnown, studentIds = pickle.load(file)
+    print("Encodings loaded:", len(studentIds))
+
+# Initial load
+if os.path.exists(ENCODE_FILE):
+    last_modified = os.path.getmtime(ENCODE_FILE)
+    load_encodings()
+else:
+    print(f"{ENCODE_FILE} not found. No encodings loaded.")
 
 cap = cv2.VideoCapture(0)
 cap.set(3, 1280)
@@ -27,6 +40,17 @@ cap.set(4, 720)
 
 # ========== Face Recognition ==========
 def recognize_face(face_img):
+    global last_modified
+    # --- Check if pickle was updated ---
+    try:
+        current_modified = os.path.getmtime(ENCODE_FILE)
+        if current_modified != last_modified:
+            print("EncodeFile updated. Reloading encodings...")
+            load_encodings()
+            last_modified = current_modified
+    except Exception as e:
+        print("Error checking EncodeFile:", e)
+
     face_tensor = mtcnn(face_img)
     if face_tensor is None:
         return "No Face"

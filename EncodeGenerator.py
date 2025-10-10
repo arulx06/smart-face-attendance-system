@@ -7,21 +7,27 @@ from facenet_pytorch import InceptionResnetV1, MTCNN
 
 # ===================== Setup =====================
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 mtcnn = MTCNN(image_size=160, margin=10, min_face_size=40, device=device)
 model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
 
+# ===================== Paths =====================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # directory of EncodeGenerator.py
+IMAGES_DIR = os.path.join(BASE_DIR, "Images")         # absolute path to Images folder
+PICKLE_FILE = os.path.join(BASE_DIR, "EncodeFile.p")  # absolute path to pickle file
 
-# ===================== Generate & Save Encodings =====================
 print("Encoding started...")
 
 encodeListKnown = []
 studentIds = []
 
-for person_folder in os.listdir("Images"):
-    person_path = os.path.join("Images", person_folder)
+# use IMAGES_DIR instead of relative "Images"
+if not os.path.exists(IMAGES_DIR):
+    print(f"Images folder not found at {IMAGES_DIR}")
+    exit(1)
+
+for person_folder in os.listdir(IMAGES_DIR):
+    person_path = os.path.join(IMAGES_DIR, person_folder)
     if os.path.isdir(person_path):
-        # extract only the numeric/student code
         student_code = person_folder.split("_")[0]
 
         person_embeddings = []
@@ -37,7 +43,6 @@ for person_folder in os.listdir("Images"):
                         embedding = model(face_tensor).cpu().numpy()[0]
                     person_embeddings.append(embedding)
 
-        # store all embeddings
         for emb in person_embeddings:
             encodeListKnown.append(emb)
             studentIds.append(student_code)
@@ -46,6 +51,6 @@ encodeListKnownIds = [encodeListKnown, studentIds]
 print(studentIds)
 print("Encoding complete.")
 
-with open("EncodeFile.p", 'wb') as file:
+with open(PICKLE_FILE, 'wb') as file:
     pickle.dump(encodeListKnownIds, file)
-print("File saved as EncodeFile.p")
+print(f"File saved as {PICKLE_FILE}")
