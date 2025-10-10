@@ -9,6 +9,7 @@ from facenet_pytorch import InceptionResnetV1, MTCNN
 
 import face_pb2
 import face_pb2_grpc
+from image_quality import is_good_quality
 
 # ========== Setup ==========
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -67,18 +68,25 @@ class FaceService(face_pb2_grpc.FaceServiceServicer):
                     if face_img.size == 0:
                         continue
 
-                    try:
-                        detected_id = recognize_face(face_img)
-                    except Exception as e:
-                        print("Recognition error:", e)
+                    # Run Image Quality Filter
+                    if not is_good_quality(face_img, (x1, y1, x2, y2), img_rgb.shape):
                         detected_id = "Error"
+                        color = (0, 0, 255)  # Red box for low-quality frames
+                    else:
+                        try:
+                            detected_id = recognize_face(face_img)
+                            color = (0, 255, 0)  # Green box for recognized faces
+                        except Exception as e:
+                            print("Recognition error:", e)
+                            detected_id = "Error"
+                            color = (0, 255, 255)
 
                     # Draw bounding box + label on the frame
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
                     cv2.putText(frame, detected_id, (x1, y1 - 10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
 
-            # ✅ Show webcam with annotations
+            # Show webcam with annotations
             cv2.imshow("Face Recognition Server", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
