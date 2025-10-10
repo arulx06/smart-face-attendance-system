@@ -7,6 +7,7 @@ import studentRoutes from "./routes/StudentRoutes.js"
 import attendanceRoutes from "./routes/attendanceRoutes.js"
 import authRoutes from "./routes/authRoutes.js";
 import { authMiddleware } from "./middleware/authMiddleware.js";
+import registerRoutes from "./routes/registerRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,5 +22,6 @@ app.use("/images", express.static(path.join(__dirname, "../Images")));
 app.use('/api/attendance',authMiddleware, attendanceRoutes);
 app.use('/api/students',authMiddleware,studentRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/register", registerRoutes);
 
 export default app
