@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 
 export default function RegisterStudentForm() {
   const [form, setForm] = useState({
@@ -10,6 +10,8 @@ export default function RegisterStudentForm() {
   });
   const [images, setImages] = useState([]);
   const [preview, setPreview] = useState([]);
+  const fileInputRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -17,6 +19,17 @@ export default function RegisterStudentForm() {
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
+    setImages(files);
+    setPreview(files.map((f) => URL.createObjectURL(f)));
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files).filter((file) =>
+      file.type === "image/jpeg" || file.type === "image/jpg"
+    );
+    if (files.length === 0) return;
     setImages(files);
     setPreview(files.map((f) => URL.createObjectURL(f)));
   };
@@ -51,6 +64,9 @@ export default function RegisterStudentForm() {
         setForm({ studentId: "", name: "", email: "", department: "", year: "" });
         setImages([]);
         setPreview([]);
+
+        // Clear file input manually
+        if (fileInputRef.current) fileInputRef.current.value = "";
       } else {
         alert("Error: " + result.message);
       }
@@ -72,7 +88,6 @@ export default function RegisterStudentForm() {
         background: "#fff",
       }}
     >
-
       {/* Input Fields */}
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <input
@@ -118,17 +133,35 @@ export default function RegisterStudentForm() {
           style={inputStyle}
         />
 
-        <div>
-          <label style={{ display: "block", marginBottom: 6, color: "#374151" }}>
-            Upload Student Images (JPG only)
-          </label>
+        {/* Drag & Drop Upload */}
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current.click()}
+          style={{
+            border: isDragging ? "2px dashed #0ea5e9" : "2px dashed #ccc",
+            borderRadius: 8,
+            padding: "20px",
+            textAlign: "center",
+            cursor: "pointer",
+            background: isDragging ? "#f0f9ff" : "#fafafa",
+            transition: "border 0.2s, background 0.2s",
+          }}
+        >
+          <p style={{ margin: 0, color: "#374151" }}>
+            Drag & drop images here or click to upload (JPG only)
+          </p>
           <input
+            ref={fileInputRef}
             type="file"
             accept=".jpg,.jpeg"
             multiple
             onChange={handleFileChange}
-            required
-            style={{ ...inputStyle, padding: "8px 10px" }}
+            style={{ display: "none" }}
           />
         </div>
       </div>
@@ -178,7 +211,7 @@ const inputStyle = {
   border: "1px solid #ccc",
   outline: "none",
   fontSize: "15px",
-  boxSizing: "border-box", // ✅ crucial fix for right spacing
+  boxSizing: "border-box",
 };
 
 const submitStyle = {

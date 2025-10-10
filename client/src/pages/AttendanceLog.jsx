@@ -1,6 +1,5 @@
 // frontend/src/pages/AttendanceLog.jsx
 import React, { useEffect, useState } from "react";
-import ReactDOM from "react-dom";
 import { io } from "socket.io-client";
 import AttendanceTable from "../components/AttendanceTable"; // adjust path if needed
 import Modal from "../components/Modal"; // adjust path if needed
@@ -63,7 +62,6 @@ export default function AttendanceLog() {
       if (data.success) {
         setSelectedStudent(data.data);
       } else {
-        // fallback if backend just returns student object
         setSelectedStudent(data);
       }
     } catch (err) {
@@ -98,8 +96,6 @@ export default function AttendanceLog() {
 
       {/* Header */}
       <div style={{ textAlign: "center", marginBottom: 18 }}>
-        
-
         {/* Toggle Buttons */}
         <div style={{ marginTop: 12 }}>
           <button
@@ -132,11 +128,9 @@ export default function AttendanceLog() {
           >
             Student List
           </button>
-          {/* Slightly moved to right */}
           <button
             onClick={() => setView("register")}
             style={{
-              marginLeft: 10,
               padding: "10px 16px",
               borderRadius: 8,
               border: "none",
@@ -187,37 +181,58 @@ export default function AttendanceLog() {
       )}
 
       {view === "students" && (
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            flexWrap: "wrap",
-            justifyContent: "center",
-          }}
-        >
-          {students.length > 0 ? (
-            students.map((s) => (
-              <button
-                key={s.studentId}
-                onClick={() => handleStudentClick(s.studentId)}
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 8,
-                  background: "#0369a1",
-                  color: "#fff",
-                  border: "none",
-                  cursor: "pointer",
-                  boxShadow: "0 6px 18px rgba(3,105,161,0.12)",
-                }}
-              >
-                {s.studentId}
-              </button>
-            ))
-          ) : (
-            <p style={{ color: "#6b7280" }}>
-              No students found. Check API or DB.
-            </p>
-          )}
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 20 }}>
+          <div style={{
+            width: "90%",
+            maxWidth: 900,
+            borderRadius: 12,
+            overflow: "hidden",
+            boxShadow: "0 8px 30px rgba(2,6,23,0.12)",
+            border: "1px solid rgba(2,6,23,0.06)",
+            background: "#fff"
+          }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "center", fontSize: 15 }}>
+              <thead style={{ backgroundColor: "#0ea5e9", color: "#fff" }}>
+                <tr>
+                  <th style={{ padding: "14px 12px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>ID</th>
+                  <th style={{ padding: "14px 12px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>Name</th>
+                  <th style={{ padding: "14px 12px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {students.length === 0 ? (
+                  <tr>
+                    <td colSpan="3" style={{ padding: "18px", textAlign: "center", color: "#6b7280" }}>
+                      No students found. Check API or DB.
+                    </td>
+                  </tr>
+                ) : (
+                  students.map((s, i) => (
+                    <tr key={s.studentId} style={{ background: i % 2 === 0 ? "#fff" : "#f8feff" }}>
+                      <td style={{ padding: "12px", borderBottom: "1px solid rgba(0,0,0,0.04)", fontWeight: 600 }}>{s.studentId}</td>
+                      <td style={{ padding: "12px", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>{s.name}</td>
+                      <td style={{ padding: "12px", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+                        <button
+                          onClick={() => handleStudentClick(s.studentId)}
+                          style={{
+                            padding: "6px 12px",
+                            borderRadius: 6,
+                            background: "#0ea5e9",
+                            color: "#fff",
+                            border: "none",
+                            cursor: "pointer",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Info
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
