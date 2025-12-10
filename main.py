@@ -60,7 +60,7 @@ def recognize_face(face_img):
     distances = np.linalg.norm(np.array(encodeListKnown) - encoding, axis=1)
     min_dist = np.min(distances)
     index = np.argmin(distances)
-    threshold = 0.9
+    threshold = 0.7
     if min_dist < threshold:
         return studentIds[index]
     else:
