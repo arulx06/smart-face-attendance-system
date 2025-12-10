@@ -41,7 +41,7 @@ cap.set(4, 720)
 # ========== Face Recognition ==========
 def recognize_face(face_img):
     global last_modified
-    # --- Check if pickle was updated ---
+
     try:
         current_modified = os.path.getmtime(ENCODE_FILE)
         if current_modified != last_modified:
@@ -78,6 +78,7 @@ class FaceService(face_pb2_grpc.FaceServiceServicer):
             img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             boxes, _ = mtcnn.detect(img_rgb)
             detected_id = "No Face"
+
 
             if boxes is not None:
                 for box in boxes:
